@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 活动平台 · 设计交接文档</title>
+<style>
+  :root{--ink:#1f2430;--sub:#5b6474;--line:#e6e9f0;--bg:#f6f7fb;--card:#fff;--accent:#4b63b0;--code:#eef1f8;--warn:#b9451d}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.75 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
+  .wrap{max-width:860px;margin:0 auto;padding:48px 24px 96px}
+  h1{font-size:28px;line-height:1.3;margin:0 0 6px}
+  .meta{color:var(--sub);font-size:13px;margin-bottom:28px;padding-bottom:20px;border-bottom:1px solid var(--line)}
+  h2{font-size:19px;margin:38px 0 12px;padding-left:12px;border-left:4px solid var(--accent)}
+  p{margin:10px 0}
+  ul,ol{margin:10px 0;padding-left:24px}
+  li{margin:7px 0}
+  strong{color:#111}
+  code{background:var(--code);padding:1px 6px;border-radius:5px;font:13px/1.6 "SFMono-Regular",Menlo,Consolas,monospace;color:#33406b}
+  blockquote{margin:14px 0;padding:12px 16px;background:#fff7ef;border-left:4px solid var(--warn);border-radius:0 8px 8px 0;color:#5a4632}
+  blockquote strong{color:var(--warn)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:8px 28px 24px;box-shadow:0 1px 3px rgba(20,30,60,.04)}
+  .lead{background:#eef1fb;border:1px solid #dfe4f5;border-radius:12px;padding:4px 20px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>AI 活动平台 · 设计交接文档</h1>
+  <div class="meta">更新日期：2026-09-22 ｜ 交接人：wuxi12（茜，平台 UX/UI 设计）</div>
+  <div class="card">
+  <div class="lead">
+    <h2 style="border:none;padding:0;margin-top:18px">一句话交接</h2>
+    <p>这是一个「AI 生成营销活动页」平台的<strong>设计侧</strong>工程：产出物是平台自身的界面 + 交互 + 状态流程设计，交给研发实现。本期只做<strong>运营 + 设计两个角色</strong>的工作台。核心模型（7 阶段 · 7 道人审门 · 状态由「阶段 × 是否卡门」推导）已收口并落到流程图和原型；剩两处待拍板（新建活动入口范式、反复申请破例的可见性），见文末。</p>
+  </div>
+
+  <h2>交付物清单</h2>
+  <ul>
+    <li><code>AI活动平台流程图.html</code>（621 行）—— 状态机与流程规则的<strong>权威表达</strong>。含 6 泳道分组、7 道人审门、各阶段状态标签、驳回/版本/优化等规则条。已发布 popo（work 11054）。</li>
+    <li><code>AI活动平台界面原型.html</code>（3304 行）—— 可点原型。单文件，纯 HTML/CSS/JS 无依赖，靠切换 <code>.screen</code> 显隐模拟多页。已发布 popo（work 11160）。</li>
+    <li><code>images/</code> —— 流程图/状态机/原型的截图存档（多为历史版本 v1/v2）。</li>
+    <li><code>.popo.json</code> —— 两个 HTML 的 popo 部署配置（slug、workId、版本号）。改完重新发布见「协作提醒」。</li>
+  </ul>
+  <p>原型的 6 个屏（<code>id="screen-*"</code>）：<code>home</code>（首页一句话生成）、<code>mgmt</code>（活动管理台/总览列表）、<code>gen</code>（生成台，含意图·风格·产物人审等阶段）、<code>design</code>（设计工作台）、<code>review</code>（审阅/上线人审）、<code>dev</code>（研发工作台，<strong>已摘除入口、进不去</strong>，markup 保留）。</p>
+
+  <h2>事实来源与优先级（冲突时从上往下压）</h2>
+  <ol>
+    <li><strong>研发侧真实流水线</strong>（agent 编排，6 泳道 25 节点，只存在于研发系统、不在本工作区）—— 节点还在增删改，前端不要写死节点常量。</li>
+    <li><strong>流程图 HTML</strong> —— 我方对外讲方案的口径，状态/规则以它为准。</li>
+    <li><strong>原型 HTML</strong> —— 界面表达，须与流程图术语一致。</li>
+  </ol>
+  <blockquote>教训：曾经卡片状态自造过一套，和流程图、研发 PRD 三方对不上，评审现场被追问。<strong>动任何状态相关 UI 前先读流程图确认当前枚举。</strong></blockquote>
+
+  <h2>核心模型</h2>
+  <p><strong>7 个阶段（运营视角）× 7 道人审门。</strong> 状态<strong>不再是独立枚举</strong>，改为「当前阶段 × 是否卡在门」推导；界面显示的是阶段进度条 + 当前阻塞的门（卡在谁 · SLA · 催办）。各阶段状态标签直接取流程图，例：风格生成中 → 待设计确认① → 页面生成中 → 待设计确认② → …… → 上线中 → 待上线审批 → 已上线 → 已上线·优化中 → 待优化确认 → 已退场；旁路：生成失败 / 已取消。</p>
+  <ul>
+    <li>一个阶段 = <strong>一个交付物 + 一个主责职能 + 一道终局门</strong>（拆分判据）。</li>
+    <li>研发「方案设计 8/8」在运营视角拆成<strong>视觉设计</strong>（风格定稿→确认①→页面全量生成→确认②）+ <strong>技术方案</strong>（点位审核→三方方案→方案定稿→方案人审）。</li>
+    <li>每道「人审」门内部是<strong>多职能并行会签</strong>（前端/后端/策略/QA/业务 + 设计），画成一个节点。</li>
+    <li><strong>需求人审已取消</strong>（玩法枚举+schema 校验是确定性的，运营自己确认）；合规前移为生成时硬约束（B 面禁用词库 + 命中转人工）。</li>
+    <li>设计侧 3 个卡口：确认①核心风格 / 确认②全部页面生成后 / 一次带真实跳转的验收。</li>
+  </ul>
+
+  <h2>玩法与生成链路（确定性优先）</h2>
+  <ul>
+    <li>一期玩法是<strong>有限枚举</strong>（十几种以内），不是开放长尾。需求理解 = <strong>分类路由 + 参数抽取</strong>，不是开放式多轮意图理解。</li>
+    <li>LLM 只做「自然语言 → 枚举玩法 + 预填参数」，缺失必填项由 schema 校验补齐；超出枚举明确告知「暂不支持」并回流到设计/研发工作台作为玩法库扩展输入。</li>
+    <li>骨架/wireframe = 确定性渲染（玩法→模板），秒级零成本、无失败分支。</li>
+    <li>一期真正的 AI 不确定性只在两处：<strong>意图→玩法路由</strong>、<strong>风格→视觉生成</strong>。风格候选用「玩法×风格」预置缩略图，不必实时生图。</li>
+  </ul>
+
+  <h2>已拍板的关键决策（不要推翻）</h2>
+  <ul>
+    <li><strong>每个角色要有自己的工作台视角</strong>，不能把非运营角色做成「通知 + 点通过」的轻量队列。角色工作流拆两面：(A) 流水线任务面（队列驱动）、(B) 资产/规则治理面（模板库、UI 规范、卡口、发奖概率/反作弊等——AI 生成质量的上游）。</li>
+    <li><strong>但视角不做「页内切换」</strong>：设计/研发/QA 各有顶级工作台；运营的列表页就是纯运营单一视角，一张卡一套操作。不要给某个角色页面塞别的角色视角。</li>
+    <li><strong>设计审核门</strong>：运营提交 → 设计在自己工作台打开活动页全貌 → <strong>可选</strong>接棒与 AI 对话改页（改是捷径不是义务）+ 规范细则逐条勾选 → 结论只有<strong>通过 / 不通过（含修改意见）</strong>。审核工时<strong>不在界面展示</strong>，只后台留痕。</li>
+    <li><strong>规范细则清单只留人判项</strong>（品牌调性、视觉层级是否引到主 CTA、破例准不准）；机器可判的（对比度/字号栅格/安全区/动效时长/图标来源）下沉为生成时预检，只展示结论。设计侧清单因此从 7 条缩到 3 条。</li>
+    <li><strong>驳回按门分级退回，不统一回草稿</strong>：只作废本门及下游，上游结论保留。产物人审驳回分两档——还原度问题退回实现（默认）；设计要改退回页面全量生成、连带作废方案+实现（须显式选、先告知代价）。上线审批驳回是例外，只退「待上线」、内容结论保留。</li>
+    <li><strong>上线后原地优化</strong>（优化→优化人审），废除旧的「已上线内容锁定、改动即复制新活动」。已上线态保留编辑入口。</li>
+    <li><strong>版本谱系必须显式</strong>：主版本号归运营（送审单位），门内审阅人改动进修订号（v1→v1.1）；界面要能看到「结论绑定哪个版本、diff 基线、下一道门差量基准」；驳回时门内修订随之作废，写进驳回弹层代价行。</li>
+    <li><strong>策略是独立职能</strong>（有方案/实现节点、门席位、审核人名册、B 面资产）。</li>
+    <li><strong>每个职能关联两个审核人</strong>：质量审核人（做得对不对，质量会签）+ 上线审核人（能不能上、能否回滚，上线审批）。名册在各自工作台维护默认值，新建活动带出、可按活动覆盖，同一人兼任需显式勾选。</li>
+    <li><strong>审核超时只靠催办</strong>，不做自动升级/备份审阅人（原型里相关机制已删）。超时 SLA 变红，运营可催办/撤回。</li>
+  </ul>
+
+  <h2>原型交互约定（已落到原型 HTML，别自作主张改）</h2>
+  <ul>
+    <li><strong>二次确认只给「不可逆 / 有已花成本 / 影响别人」的动作</strong>。正向主流程（确认玩法参数、确认风格）不拦，只给 toast 说明开跑了、要多久。危险档（红）留给作废下游产出、影响线上用户的操作。</li>
+    <li><strong>弹窗代价行只写时间与影响面，不写金额</strong>（全文 ¥ 金额、成本 KPI、预算字段已清空）。例：「已消耗约 50min 不可退 · 重跑还需约 107min」。模型选择只讲质量与时长，不讲成本倍数。</li>
+    <li><strong>反馈 = 底部居中 toast，2.6s，从下往上滑</strong>。已否决右上角与锚定按钮两种方案。它会遮中列底部进度条，暂时接受；要解只让进度条避让，不许移 toast。</li>
+    <li><strong>三列语义固定</strong>：左=对话与信息（时间线/审阅对象），中=预览，右=动作（催办/撤回/取消在右栏底部固定区）。</li>
+    <li><strong>界面出现人名必须带职能</strong>：小圆职能标记 + 姓名（如 <code>设</code>林一 / <code>后</code>李桁 / <code>运</code>wuxi12），不用文字前缀或括号补角色。</li>
+    <li><strong>降认知成本，但别靠解释性小字讲设计意图</strong>。优先用界面自身（禁用/锁定/占位/进度分段/二次确认）表达规则；讲不通就改设计，不补文案。改动优先轻量，能复用现有元素（<code>.dfrow</code>/<code>.wtnote</code> 等）就不新增页面/弹层。</li>
+  </ul>
+
+  <h2>原型专用开关（上线前必须删）</h2>
+  <ul>
+    <li>顶栏「跳阶段」按钮、「运营/设计」视角切换器（真实产品角色来自登录态，见原型 JS 注释 <code>原型：视角切换</code>）。</li>
+    <li>技术方案屏的两个「原型：」按钮。</li>
+    <li>顶栏开关已去掉「原型 ·」前缀，现在<strong>靠代码注释识别</strong>，删的时候按注释找。</li>
+    <li><code>#screen-dev</code> 的 markup（研发工作台，本期不做，入口已摘）。</li>
+  </ul>
+
+  <h2>待拍板 / 遗留</h2>
+  <ul>
+    <li><strong>新建活动入口范式未定</strong>：研发 PRD 要求先填 13 字段表单（含活动规模按 QPS 分档、活动激励有无——这两项会改变生成台形态）；我方原型是首页一句话/点玩法芯片直接进生成台，中间无表单。折中可能是「一句话生成 + 上线前补齐必填」。且 PRD 的预算、MRD、绑定团队、上线平台四项在我方设计里完全不存在。<strong>再动生成台入口前先定这条。</strong></li>
+    <li>PRD 还有一批我方原型缺的约束待补：KPI 卡四个跳转落地页（数据/进行中/流量分发/实验数据页均不存在）、tab 年/月/日时间筛选、无编辑权限 toast、删除二次确认+操作日志、复制改名 xxx(1) 且 ID 重生、「上线/未上线」二元标签与细分状态并存。</li>
+    <li><strong>反复申请破例的可见性</strong>（用户尚未表态）：破例可反复申请、不限次数；但若审阅人看不到「第几次申请 / 上次谁驳的」，等于零成本磨到通过。建议复用生成台已有「送审次数 第2次·上次被驳回」写法挂到破例行。</li>
+    <li>立项预算字段：清金额时被换成「目标人群」，暂不恢复。</li>
+  </ul>
+
+  <h2>协作提醒</h2>
+  <ul>
+    <li>改完 HTML 要重新发布 popo：走 popo skill，slug 见 <code>.popo.json</code>（原型 <code>activity-platform-ui</code> / 流程图 <code>activity-platform-flow</code>）。</li>
+    <li>项目决策脉络与「为什么这么定」的完整背景在记忆库：<code>~/.comate/projects/…/memory/</code>（<code>project_*</code> 与 <code>feedback_*</code> 文件），比本文更细。</li>
+    <li>非 git 仓库，无版本历史；改动前先备份或自行初始化 git。</li>
+  </ul>
+  </div>
+</div>
+</body>
+</html>

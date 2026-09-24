@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>乐高 AI 平台 · 流程图</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#FAFAF8;
+  --card:#FFFFFF;
+  --ink:#1C1C1A;
+  --ink2:#6B6B66;
+  --ink3:#9A9992;
+  --line:#E4E2DC;
+  --indigo:#3D5A80;
+  --brick:#B5533C;
+  --olive:#5C7A5A;
+  --rcard:12px;
+  --rchip:4px;
+  --sh:0 1px 3px rgba(28,28,26,.06);
+  --sans:"Noto Sans SC","IBM Plex Sans",-apple-system,sans-serif;
+  --serif:"Noto Serif SC",serif;
+  --fs-node:15px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background:var(--paper);color:var(--ink);
+  font-family:var(--sans);
+  -webkit-font-smoothing:antialiased;
+  padding:56px 40px 120px;
+  text-wrap:pretty;
+}
+.wrap{max-width:1240px;margin:0 auto}
+.doc-head{margin-bottom:64px;padding-bottom:28px;border-bottom:1px solid var(--line)}
+.doc-head h1{
+  font-family:var(--serif);font-weight:700;
+  font-size:clamp(26px,3vw,34px);letter-spacing:.02em;
+}
+.doc-head p{margin-top:10px;color:var(--ink2);font-size:14px;line-height:1.7}
+section{margin-bottom:88px}
+.sec-head{display:flex;align-items:baseline;gap:14px;margin-bottom:28px}
+.sec-num{
+  font-family:"IBM Plex Sans",sans-serif;font-weight:600;font-size:12px;
+  letter-spacing:.14em;color:var(--ink3);padding-top:4px;
+}
+.sec-head h2{font-family:var(--serif);font-weight:600;font-size:21px;letter-spacing:.01em}
+.sec-head .sub{color:var(--ink2);font-size:13px;margin-left:auto}
+.canvas{
+  position:relative;background:var(--card);
+  border:1px solid var(--line);border-radius:var(--rcard);
+  box-shadow:var(--sh);overflow:hidden;
+}
+.canvas svg.wire{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+/* ---- 节点 ---- */
+.node{
+  position:absolute;background:var(--card);
+  border:1px solid var(--line);border-radius:var(--rcard);
+  box-shadow:var(--sh);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:10px;text-align:center;
+  transition:box-shadow .18s ease,border-color .18s ease;
+}
+.node:hover{box-shadow:0 3px 12px rgba(28,28,26,.09);border-color:#D6D3CB}
+.node .ico{width:22px;height:22px;stroke-width:1.5;fill:none;stroke:var(--indigo)}
+.node .lbl{font-size:var(--fs-node);font-weight:500;letter-spacing:.01em;line-height:1.3}
+.node .idx{
+  font-family:"IBM Plex Sans",sans-serif;font-size:11px;font-weight:600;
+  color:var(--ink3);letter-spacing:.06em;
+}
+.node.warn .ico{stroke:var(--brick)}
+.node.warn{background:#FDF7F5;border-color:#EBD6CF}
+.node.good .ico{stroke:var(--olive)}
+/* 外部系统（立项）：虚线框区别于平台内节点 */
+.node.ext{border-style:dashed;border-color:#CFCCC4;background:#FBFAF7;box-shadow:none}
+.node.ext .ico{stroke:var(--ink3)}
+.node.ext .lbl{color:var(--ink2)}
+/* 流程节点（带序号在上） */
+.f-node{width:132px;height:118px;padding:16px 8px}
+/* 状态节点 */
+.s-node{width:150px;height:76px;flex-direction:row;gap:9px;padding:0 12px}
+.s-node .lbl{font-size:14px}
+/* ---- 连线文字 ---- */
+.wire text{
+  font-family:var(--sans);font-size:11.5px;font-weight:500;
+  fill:var(--ink2);letter-spacing:.02em;
+  paint-order:stroke;stroke:var(--card);stroke-width:3.5px;stroke-linejoin:round;
+}
+.wire text.rj{fill:var(--brick)}
+.wire text.fb{fill:var(--olive);font-size:12px}
+.wire path{fill:none}
+.wire path.solid{stroke:var(--indigo);stroke-width:1.4}
+.wire path.rj{stroke:var(--brick);stroke-width:1.3;stroke-dasharray:5 4}
+.wire path.fb{stroke:var(--olive);stroke-width:1.3;stroke-dasharray:5 4}
+.wire path.ext{stroke:#A8A59C;stroke-width:1.3;stroke-dasharray:4 3}
+.wire text.ext{fill:var(--ink3)}
+/* ---- 泳道 ---- */
+.lanes{display:grid;grid-template-columns:76px repeat(6,minmax(0,1fr));border-top:1px solid var(--line);width:100%;min-width:0}
+.lanes>div{border-bottom:1px solid var(--line);border-right:1px solid var(--line);padding:8px 6px;min-height:48px;min-width:0}
+.lanes>div:nth-child(8n+1){border-left:none;background:#FCFCFA;display:flex;align-items:center}
+.lanes .col-h{background:#F6F5F1;font-size:11px;font-weight:600;color:var(--ink2);letter-spacing:.03em;text-align:center;justify-content:center;display:flex;align-items:center;min-height:40px;line-height:1.3;word-break:keep-all;overflow-wrap:anywhere}
+.lane-role{font-size:12px;font-weight:600;letter-spacing:.03em}
+.chip{
+  display:inline-block;font-size:10px;line-height:1.35;padding:3px 5px;
+  border-radius:var(--rchip);border:1px solid var(--line);background:#FCFCFA;
+  color:var(--ink);margin:1px 0;
+}
+.chip.ai{border-color:#CBD8E4;background:#F4F8FB;color:var(--indigo)}
+.chip.rv{border-color:#DCE4DB;background:#F6F9F5;color:var(--olive)}
+.chip.qa{border-color:#EBD6CF;background:#FDF7F5;color:var(--brick)}
+/* ---- 角色两面 ---- */
+.faces{display:grid;grid-template-columns:96px 1fr 1fr 210px;border-top:1px solid var(--line)}
+.faces>div{border-bottom:1px solid var(--line);border-right:1px solid var(--line);padding:14px 12px;min-height:64px}
+.faces>div:nth-child(4n+1){border-left:none;background:#FCFCFA;display:flex;align-items:center}
+.faces .col-h{background:#F6F5F1;font-size:12px;font-weight:600;color:var(--ink2);letter-spacing:.03em;display:flex;align-items:center;min-height:46px}
+.faces .col-h.c{justify-content:center;text-align:center}
+.faces .col-h em{font-style:normal;font-weight:400;color:var(--ink3);margin-left:6px;font-size:11.5px}
+.faces .cv{font-size:12px;color:var(--ink2);line-height:1.7;display:flex;align-items:center}
+.chip.b{border-color:#E0D6C4;background:#FBF8F2;color:#8A6F3E}
+.face-note{margin-top:16px;font-size:12.5px;color:var(--ink2);line-height:1.8}
+.face-note b{font-weight:600;color:var(--ink)}
+/* ---- 枚举与能力表 ---- */
+.draft-flag{display:flex;gap:10px;align-items:flex-start;border:1px solid #EBD6CF;background:#FDF7F5;border-radius:var(--rcard);padding:13px 16px;margin-bottom:20px;font-size:12.5px;color:#8F4231;line-height:1.7}
+.draft-flag b{font-weight:600}
+.tb-wrap{background:var(--card);border:1px solid var(--line);border-radius:var(--rcard);box-shadow:var(--sh);overflow:hidden}
+.cap-tb{width:100%;border-collapse:collapse;font-size:12px}
+.cap-tb th,.cap-tb td{border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:8px 6px;text-align:center}
+.cap-tb tr th:last-child,.cap-tb tr td:last-child{border-right:0}
+.cap-tb thead th{background:#F6F5F1;font-weight:600;color:var(--ink2);font-size:11px;line-height:1.35;vertical-align:bottom;height:96px}
+.cap-tb thead th span{writing-mode:vertical-rl;text-orientation:upright;letter-spacing:.06em;display:inline-block}
+.cap-tb thead th.rh{writing-mode:horizontal-tb;text-align:left;padding-left:14px;min-width:132px;vertical-align:middle}
+.cap-tb tbody th{text-align:left;background:#FCFCFA;font-weight:500;font-size:12.5px;padding-left:14px;white-space:nowrap}
+.cap-tb tbody th em{font-style:normal;color:var(--ink3);font-size:11px;font-family:"IBM Plex Sans";margin-right:7px}
+.cap-tb tbody tr:last-child th,.cap-tb tbody tr:last-child td{border-bottom:0}
+.cap-tb .y{color:var(--olive);font-weight:600}
+.cap-tb .p{color:#B08A3E;font-weight:600}
+.cap-tb .n{color:#D8D5CD}
+.cap-tb td.na{background:#FCFBF9}
+.plist{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin-top:20px}
+.pitem{background:var(--card);border:1px solid var(--line);border-radius:var(--rcard);padding:14px 16px;box-shadow:var(--sh)}
+.pitem h4{font-size:13px;font-weight:600;margin-bottom:3px}
+.pitem h4 em{font-style:normal;color:var(--ink3);font-size:11px;font-family:"IBM Plex Sans";margin-right:7px;font-weight:500}
+.pitem .ds{font-size:11.5px;color:var(--ink3);line-height:1.6;margin-bottom:9px}
+.pitem .ps{display:flex;flex-wrap:wrap;gap:4px}
+.pitem .ps .chip{font-size:11px;padding:3px 7px}
+/* ---- 规则区 ---- */
+.rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;margin-top:8px}
+.rule{background:var(--card);border:1px solid var(--line);border-radius:var(--rcard);padding:18px 20px;box-shadow:var(--sh)}
+.rule h4{font-size:13px;font-weight:600;letter-spacing:.03em;margin-bottom:8px}
+.rule p{font-size:12.5px;color:var(--ink2);line-height:1.75}
+.legend{display:flex;gap:24px;flex-wrap:wrap;margin-top:16px;font-size:12px;color:var(--ink2)}
+.legend i{display:inline-block;width:22px;height:0;border-top:1.4px solid;margin-right:7px;vertical-align:middle}
+/* ---- 阶段带（对齐研发流水线泳道）---- */
+.stages{display:flex;flex-direction:column;gap:10px}
+.stage{background:var(--card);border:1px solid var(--line);border-radius:var(--rcard);box-shadow:var(--sh);padding:14px 16px 16px;position:relative}
+.stage>.sh{display:flex;align-items:baseline;gap:10px;margin-bottom:12px}
+.stage>.sh b{font-size:13px;font-weight:600;letter-spacing:.04em}
+.stage>.sh .cnt{font-family:"IBM Plex Sans";font-size:11px;font-weight:600;color:var(--ink3);letter-spacing:.06em}
+.stage>.sh .ops{margin-left:auto;font-size:11.5px;color:var(--ink3)}
+.stage>.sh .ops b{font-weight:600;color:var(--olive);letter-spacing:0}
+.flow{display:flex;align-items:center;flex-wrap:wrap;gap:0}
+.pn{border:1px solid var(--line);background:#FCFCFA;border-radius:var(--rchip);padding:7px 11px;font-size:12.5px;line-height:1.4;white-space:nowrap}
+.pn.ai{border-color:#CBD8E4;background:#F4F8FB;color:var(--indigo)}
+.pn.gt{border-color:#DCE4DB;background:#F6F9F5;color:var(--olive);font-weight:600}
+.pn.gt.dsg{border-color:#C9D8C6;background:#EEF5EC}
+.pn em{font-style:normal;font-weight:400;font-size:11px;color:var(--ink3);margin-left:5px}
+.pn.new{position:relative}
+.pn.new::after{content:"新";position:absolute;top:-6px;right:-6px;background:var(--brick);color:#fff;font-size:9px;font-weight:600;line-height:1;padding:2px 3px;border-radius:2px;letter-spacing:.04em}
+.ar{width:16px;height:0;border-top:1.3px solid #C9C6BE;position:relative;flex:0 0 16px}
+.ar::after{content:"";position:absolute;right:0;top:-3px;width:0;height:0;border-left:4px solid #C9C6BE;border-top:3px solid transparent;border-bottom:3px solid transparent}
+.par{display:flex;gap:6px;flex-wrap:wrap;border:1px dashed #D6D3CB;border-radius:6px;padding:5px 7px;background:#FBFAF7}
+.par .pn{background:var(--card)}
+.stage .note{margin-top:11px;font-size:11.5px;color:var(--ink3);line-height:1.7}
+.stage .note b{font-weight:600;color:var(--ink2)}
+/* ---- 状态推导表 ---- */
+.stmx{display:grid;grid-template-columns:104px 1fr 1fr 1fr;border-top:1px solid var(--line);background:var(--card);border-left:1px solid var(--line);border-radius:var(--rcard);overflow:hidden;box-shadow:var(--sh)}
+.stmx>div{border-bottom:1px solid var(--line);border-right:1px solid var(--line);padding:13px 12px;font-size:12px;line-height:1.7;color:var(--ink2)}
+.stmx>div:nth-child(4n+1){background:#FCFCFA;display:flex;align-items:center;font-size:12.5px;font-weight:600;color:var(--ink)}
+.stmx .col-h{background:#F6F5F1;font-size:11.5px;font-weight:600;color:var(--ink2);letter-spacing:.03em}
+.stmx .st{display:inline-block;border:1px solid var(--line);background:#FCFCFA;border-radius:var(--rchip);padding:3px 7px;font-size:11.5px;color:var(--ink);margin:2px 3px 2px 0}
+.stmx .st.g{border-color:#DCE4DB;background:#F6F9F5;color:var(--olive)}
+.stmx .st.w{border-color:#EBD6CF;background:#FDF7F5;color:var(--brick)}
+.stmx .rb{color:var(--brick)}
+/* ---- Tweaks ---- */
+#tw{position:fixed;right:22px;bottom:22px;z-index:99;font-family:var(--sans)}
+#tw button.t{
+  border:1px solid var(--line);background:var(--card);color:var(--ink2);
+  border-radius:20px;padding:9px 16px;font-size:12px;font-weight:500;
+  cursor:pointer;box-shadow:var(--sh);font-family:inherit;letter-spacing:.04em;
+}
+#tw button.t:hover{color:var(--ink);border-color:#D6D3CB}
+#tw .panel{
+  display:none;background:var(--card);border:1px solid var(--line);
+  border-radius:var(--rcard);box-shadow:0 6px 24px rgba(28,28,26,.10);
+  padding:18px;width:238px;margin-bottom:10px;
+}
+#tw.open .panel{display:block}
+#tw .panel h5{font-size:11px;letter-spacing:.14em;color:var(--ink3);font-weight:600;margin-bottom:14px}
+#tw label{display:block;font-size:12px;color:var(--ink2);margin:0 0 6px}
+#tw .row{margin-bottom:15px}
+#tw input[type=range]{width:100%;accent-color:var(--indigo)}
+#tw .sw{display:flex;gap:8px}
+#tw .sw span{width:26px;height:26px;border-radius:50%;cursor:pointer;border:2px solid transparent}
+#tw .sw span.on{border-color:var(--ink)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="doc-head">
+  <h1>乐高 AI 平台 · 核心流程</h1>
+  <p>运营输入意图 → AI 产出成品 → 各职能只在门上 Review。节点与阶段对齐研发已在试运行的真实流水线：7 阶段 · 27 节点 · 7 道人审门。</p>
+</div>
+
+<!-- ① 核心流程 -->
+<section>
+  <div class="sec-head">
+    <span class="sec-num">01</span>
+    <h2>核心流程总览</h2>
+    <span class="sub">创意与玩法 → 视觉设计 → 技术方案 → 实现 → 上线 → 分析优化 → 下线</span>
+  </div>
+  <div class="stages">
+
+    <div class="stage">
+      <div class="sh"><b>创意与玩法</b><span class="cnt">1 节点 · 0 门</span><span class="ops">运营可见：<b>全部 —— 这是运营主场</b></span></div>
+      <div class="flow">
+        <span class="pn ai new">玩法路由与参数抽取<em>流水线原名：需求分析</em></span><span class="ar"></span>
+        <span class="pn new">运营自己确认<em>无人审</em></span>
+      </div>
+      <div class="note">立项通过后自动建卡；AI 把一句话描述路由到<b>枚举玩法</b>并预填参数，运营对照需求点逐条确认，<b>这一步不设人审门</b>——玩法是枚举的、参数有 schema 校验，本身就是确定性的，再加一道人工没有增量信息。<br><b>合规的落点跟着变了</b>：业务原来在这道门上把合规口径，现在改成<b>生成时的硬约束</b>——B 面的禁用词库与合规口径在路由阶段自动校验，命中才升级为人工。见 05。<br><b>阶段名用运营语言，节点名保留流水线原名</b>：阶段分组是我们自己划的，可以本地化；节点是研发在跑的东西，改名会造成两套口径。</div>
+    </div>
+
+    <div class="stage">
+      <div class="sh"><b>视觉设计</b><span class="cnt">4 节点 · 2 门</span><span class="ops">运营可见：<b>阶段进度 + 卡在谁</b></span></div>
+      <div class="flow">
+        <span class="pn ai new">风格定稿</span><span class="ar"></span>
+        <span class="pn gt dsg new">设计确认①<em>核心风格</em></span><span class="ar"></span>
+        <span class="pn ai new">页面全量生成</span><span class="ar"></span>
+        <span class="pn gt dsg new">设计确认②<em>全部页面</em></span>
+      </div>
+      <div class="note">研发原「交互与视觉定稿」（199min，全程最长的单节点）<b>拆成风格定稿 + 页面全量生成</b>两节点：设计要的两次确认之间必须夹着页面生成这个动作，不拆开这两道门会落在同一个节点出口，等于只确认了一次；且 199min 一个黑盒对运营等于没有进度，拆开后「卡在设计确认① · 林一 · SLA 剩 20min」才看得见、催得动。<br><b>这一段与下一段的边界就是确认②</b>：确认②之前是设计在产出、设计在审，交付物是设计稿；之后主角换成前端 / 后端 / 策略，交付物是技术方案。研发流水线把两段合并在「方案设计」一个分组里，运营视角必须拆开——否则运营看着「方案设计」，却卡在前端席位上。</div>
+    </div>
+
+    <div class="stage">
+      <div class="sh"><b>技术方案</b><span class="cnt">7 节点 · 2 门</span><span class="ops">运营可见：<b>阶段进度 + 卡在谁</b></span></div>
+      <div class="flow">
+        <span class="pn gt">点位说明审核<em>前端 · 后端 · 策略</em></span><span class="ar"></span>
+        <span class="par"><span class="pn ai">物料出图</span><span class="pn ai">前端方案</span><span class="pn ai">后端方案</span><span class="pn ai new">策略方案</span></span><span class="ar"></span>
+        <span class="pn ai">方案定稿</span><span class="ar"></span>
+        <span class="pn gt">方案人审<em>各职能</em></span>
+      </div>
+      <div class="note">点位说明是<b>拿确认②之后的稿子</b>产出的，所以两道设计门必须都在它之前——这也是这一段能独立成阶段的前提：它的输入是已定稿的视觉，输出是研发能直接开工的方案。<br><b>没有并进「实现」</b>：并进去会让「实现中」这个状态骗人（运营以为在写代码，其实还在写方案文档），也会让实现段背两个交付物两道终局门。判据见 05「一个阶段 = 一个交付物 + 一个主责职能 + 一道终局门」。<br>注意这一段与研发分组不是一一对应：<b>研发的「方案设计 8/8」= 我们的视觉设计 + 技术方案</b>，对账时按此映射。</div>
+    </div>
+
+    <div class="stage">
+      <div class="sh"><b>实现</b><span class="cnt">6 节点 · 1 门</span><span class="ops">运营可见：<b>阶段进度 + 卡在谁</b></span></div>
+      <div class="flow">
+        <span class="par"><span class="pn ai">前端实现</span><span class="pn ai">后端实现</span><span class="pn ai new">策略实现</span></span><span class="ar"></span>
+        <span class="pn ai">效果预览</span><span class="ar"></span>
+        <span class="pn gt dsg">产物人审<em>设计验收 · 前端 · 后端 · 策略 · QA · 业务</em></span><span class="ar"></span>
+        <span class="pn ai new">线下测试</span>
+      </div>
+      <div class="note">「效果预览」的产物<b>真能点、跳转接真实链路</b>，所以设计那一次验收（带真实跳转逻辑）就落在产物人审的设计席位，不必后移到上线之后——后移的话代码已经上线，驳回代价是另一个量级。这一段也是全程最长的（三方实现 + 效果预览约 107min），因此产物人审驳回必须分两档，见 05。设计若在门内改过，驳回时那份修订随之作废——这条要写在驳回弹层的代价行里。</div>
+    </div>
+
+    <div class="stage">
+      <div class="sh"><b>上线</b><span class="cnt">5 节点 · 1 门</span><span class="ops">运营可见：<b>灰度进度 + 上线审批</b></span></div>
+      <div class="flow">
+        <span class="pn ai new">代码上线</span><span class="ar"></span>
+        <span class="pn ai new">资源就位</span><span class="ar"></span>
+        <span class="pn ai new">线上零流量测试</span><span class="ar"></span>
+        <span class="pn gt">上线人审<em>各职能上线审核人</em></span><span class="ar"></span>
+        <span class="pn ai new">全量上线</span>
+      </div>
+      <div class="note">上线本身是<b>灰度</b>：零流量验证 → 上线人审判断时机与回滚 → 才全量。旧版「分发」一格里没有灰度概念，而回滚能力正是上线审核人要判断的东西。上线人审驳回只退回本阶段起点，产物人审结论保留。</div>
+    </div>
+
+    <div class="stage">
+      <div class="sh"><b>分析优化</b><span class="cnt">3 节点 · 1 门</span><span class="ops">运营可见：<b>全部 —— 这是运营主场</b></span></div>
+      <div class="flow">
+        <span class="pn ai new">效果分析</span><span class="ar"></span>
+        <span class="pn new">优化</span><span class="ar"></span>
+        <span class="pn gt new">优化人审<em>同产物人审席位 · 只看差量</em></span>
+      </div>
+      <div class="note">已上线活动<b>原地优化后重新过门</b>，不再复制成新活动重走全流程（旧规则已废，见 05）。上线后调文案、调概率、换素材是运营常态，强迫复制新活动等于逼他们绕开平台。</div>
+    </div>
+
+    <div class="stage">
+      <div class="sh"><b>下线</b><span class="cnt">1 节点</span><span class="ops">运营可见：<b>结束 / 下线时间</b></span></div>
+      <div class="flow">
+        <span class="pn">退场</span><span class="ar"></span><span class="pn">结束</span>
+      </div>
+      <div class="note">结束时间到 = 玩法停止收数据、入口还在，进去只看得到结果页；下线时间到 = 入口撤除、从分发资源位移走。两个时间各自可配，也都能手动触发。</div>
+    </div>
+
+  </div>
+  <div class="legend">
+    <span><i style="border-color:#CBD8E4"></i>AI / 平台自动 —— 运营视角折叠成一行进度</span>
+    <span><i style="border-color:#5C7A5A"></i>人审门 —— 必须冒泡到运营视角（卡在谁 · SLA · 催办）</span>
+    <span>标「新」= 相对旧版 7 节点模型新增或拆分出来的</span>
+  </div>
+</section>
+<!-- ② 状态机 -->
+<section>
+  <div class="sec-head">
+    <span class="sec-num">02</span>
+    <h2>活动状态 = 阶段 × 门</h2>
+    <span class="sub">状态不独立枚举，由阶段与门推导；能不能点由状态 × 权限决定</span>
+  </div>
+  <div class="stmx">
+    <div class="col-h">阶段</div>
+    <div class="col-h">运营看到的状态（= 阶段 + 是否卡在门）</div>
+    <div class="col-h">门与席位</div>
+    <div class="col-h">驳回退回到</div>
+
+    <div>创意与玩法</div>
+    <div><span class="st">玩法路由中</span><span class="st">待运营确认</span></div>
+    <div>无门 —— 运营自己确认；合规走生成时硬约束，命中才转人工</div>
+    <div>—</div>
+
+    <div>视觉设计</div>
+    <div><span class="st">风格生成中</span><span class="st g">待设计确认①</span><span class="st">页面生成中</span><span class="st g">待设计确认②</span></div>
+    <div>设计确认① · 设计<br>设计确认② · 设计（只看新增页面态）</div>
+    <div class="rb">确认①→ 风格定稿<br>确认②→ 页面全量生成（风格结论保留）</div>
+
+    <div>技术方案</div>
+    <div><span class="st g">待点位确认</span><span class="st">方案生成中</span><span class="st g">待方案确认</span></div>
+    <div>点位说明审核 · 前端 + 后端 + 策略<br>方案人审 · 各职能</div>
+    <div class="rb">点位 / 方案 → 各自上游生成节点<br>不退回视觉设计（设计结论保留）</div>
+
+    <div>实现</div>
+    <div><span class="st">实现中</span><span class="st g">待产物会签</span></div>
+    <div>产物人审 · 设计（验收）+ 前端 + 后端 + 策略 + QA + 业务<br><span style="color:var(--ink3)">设计席可接棒改页 → 进修订号 v1.1，状态不变</span></div>
+    <div class="rb">两档：还原度问题 → 实现<br>设计要改 → 页面全量生成（连带作废方案 + 实现）</div>
+
+    <div>上线</div>
+    <div><span class="st">上线中</span><span class="st g">待上线审批</span><span class="st">灰度零流量</span><span class="st">已上线</span></div>
+    <div>上线人审 · 各职能上线审核人</div>
+    <div class="rb">上线阶段起点（产物人审结论保留）</div>
+
+    <div>分析优化</div>
+    <div><span class="st">已上线 · 优化中</span><span class="st g">待优化确认</span></div>
+    <div>优化人审 · 同产物人审席位，只看差量</div>
+    <div class="rb">优化</div>
+
+    <div>下线</div>
+    <div><span class="st">已结束</span><span class="st">已退场</span></div>
+    <div>—</div>
+    <div>—</div>
+
+    <div>旁路</div>
+    <div><span class="st w">生成失败</span><span class="st w">已取消</span></div>
+    <div>无门。Agent 节点失败自动重试，<b>重试超限才升级为「生成失败」</b>并通知运营</div>
+    <div class="rb">失败节点原地重跑；取消回空草稿</div>
+  </div>
+  <div class="legend">
+    <span><b>不再维护一套独立的状态枚举</b>——状态由「当前阶段 × 是否卡在门」二元组推导。流水线增删节点时状态自动跟随，不用再对齐第二套名词。</span>
+  </div>
+</section>
+<!-- ③ 角色泳道 -->
+<section>
+  <div class="sec-head">
+    <span class="sec-num">03</span>
+    <h2>角色泳道</h2>
+    <span class="sub">8 职能 × 6 阶段 · 蓝=AI自动 绿=人审席位 红=QA 棕=B 面资产</span>
+  </div>
+  <div class="lanes">
+    <div class="col-h" style="background:#F6F5F1"></div>
+    <div class="col-h">① 创意与玩法</div><div class="col-h">② 视觉设计</div><div class="col-h">③ 技术方案</div><div class="col-h">④ 实现</div>
+    <div class="col-h">⑤ 上线</div><div class="col-h">⑥ 分析优化<br>／下线</div>
+
+    <div><span class="lane-role">运营</span></div>
+    <div><span class="chip">描述玩法</span><span class="chip">关联热点</span><span class="chip">对照需求点自己确认</span></div>
+    <div><span class="chip">选风格候选</span><span class="chip">催办 / 等待</span></div>
+    <div><span class="chip">催办 / 等待</span></div>
+    <div><span class="chip">催办 / 等待</span></div>
+    <div><span class="chip">发起上线</span><span class="chip">上线时间窗</span><span class="chip">配流量入口</span><span class="chip">人群定向</span></div>
+    <div><span class="chip">看效果数据</span><span class="chip">提优化并原地改</span><span class="chip">结束 / 下线时间</span></div>
+
+    <div><span class="lane-role">AI / 平台</span></div>
+    <div><span class="chip ai">分类路由 + 参数抽取</span><span class="chip ai">带出默认审核人名册</span></div>
+    <div><span class="chip ai">风格定稿</span><span class="chip ai">页面全量生成</span><span class="chip ai">差量高亮</span></div>
+    <div><span class="chip ai">物料出图</span><span class="chip ai">三方方案 + 定稿</span></div>
+    <div><span class="chip ai">三方实现</span><span class="chip ai">效果预览（可点）</span><span class="chip ai">线下测试</span><span class="chip ai">锁定版本</span></div>
+    <div><span class="chip ai">代码上线</span><span class="chip ai">资源就位</span><span class="chip ai">零流量测试</span><span class="chip ai">QPS / 容量预估</span><span class="chip ai">回滚方案校验</span></div>
+    <div><span class="chip ai">效果分析</span><span class="chip ai">沉淀模板</span><span class="chip ai">数据回收</span></div>
+
+    <div><span class="lane-role">设计</span></div>
+    <div><span class="chip b">风格模板库 · 硬约束</span></div>
+    <div><span class="chip rv">设计确认① 核心风格</span><span class="chip rv">设计确认② 全部页面</span></div>
+    <div></div>
+    <div><span class="chip rv">设计验收 · 带真实跳转</span><span class="chip">可选接棒改页 · 进修订号</span></div>
+    <div><span class="chip rv">上线审核人确认</span></div>
+    <div><span class="chip rv">优化人审席位</span></div>
+
+    <div><span class="lane-role">前端</span></div>
+    <div><span class="chip b">组件白名单</span><span class="chip b">QPS / 容量卡口</span></div>
+    <div></div>
+    <div><span class="chip rv">点位说明审核席位</span><span class="chip rv">方案人审席位</span></div>
+    <div><span class="chip rv">产物人审席位</span></div>
+    <div><span class="chip rv">上线审核人确认</span></div>
+    <div><span class="chip rv">优化人审席位</span><span class="chip">埋点校验</span></div>
+
+    <div><span class="lane-role">后端</span></div>
+    <div><span class="chip b">接口与容量卡口</span></div>
+    <div></div>
+    <div><span class="chip rv">点位说明审核席位</span><span class="chip rv">方案人审席位</span></div>
+    <div><span class="chip rv">产物人审席位</span></div>
+    <div><span class="chip rv">上线审核人确认</span></div>
+    <div><span class="chip rv">优化人审席位</span><span class="chip">资源回收</span></div>
+
+    <div><span class="lane-role">策略</span></div>
+    <div><span class="chip b">发奖 / 概率规则库</span><span class="chip b">反作弊口径</span></div>
+    <div></div>
+    <div><span class="chip rv">点位说明审核席位</span><span class="chip rv">方案人审席位</span></div>
+    <div><span class="chip rv">产物人审席位</span></div>
+    <div><span class="chip rv">上线审核人确认</span></div>
+    <div><span class="chip rv">优化人审席位</span><span class="chip">策略调参</span></div>
+
+    <div><span class="lane-role">QA</span></div>
+    <div></div>
+    <div></div>
+    <div><span class="chip b">可用性标准 / 检查项</span></div>
+    <div><span class="chip qa">产物人审席位</span><span class="chip qa">线下测试用例</span><span class="chip qa">埋点口径确认</span></div>
+    <div><span class="chip qa">零流量验证</span><span class="chip rv">上线审核人确认</span></div>
+    <div><span class="chip rv">优化人审席位</span></div>
+
+    <div><span class="lane-role">业务</span></div>
+    <div><span class="chip b">合规口径与禁用词库</span><span class="chip b">命中即转人工的阈值</span></div>
+    <div></div>
+    <div></div>
+    <div><span class="chip rv">产物人审席位 · 合规</span></div>
+    <div><span class="chip rv">上线审核人确认</span></div>
+    <div><span class="chip rv">优化人审席位</span></div>
+  </div>
+</section>
+<!-- ④ 角色视角 × 两类工作面 -->
+<section>
+  <div class="sec-head">
+    <span class="sec-num">04</span>
+    <h2>角色视角 × 两类工作面</h2>
+    <span class="sub">泳道只画得出 A 面 · B 面横切全流程，必须单独实现</span>
+  </div>
+  <div style="overflow-x:auto">
+  <div class="faces" style="min-width:1000px">
+    <div class="col-h"></div>
+    <div class="col-h c">A 面 · 流水线任务<em>队列驱动，被动响应</em></div>
+    <div class="col-h c">B 面 · 资产与规则治理<em>主动维护，AI 生成质量的上游</em></div>
+    <div class="col-h c">收敛信号</div>
+
+    <div><span class="lane-role">设计</span></div>
+    <div><span class="chip rv">待我审阅（锁定主版本）</span><span class="chip rv">锚点批注</span><span class="chip">驳回需带原因</span><span class="chip">可选接棒改页 · 记修订号</span><span class="chip">只勾机器判不了的</span></div>
+    <div><span class="chip b">风格模板库 · 硬约束</span><span class="chip b">组件视觉库</span><span class="chip b">入口 UI 规范</span><span class="chip b">高频偏离项 → 沉淀为硬约束</span><span class="chip b">预检不覆盖清单 + 抽检一致率</span></div>
+    <div class="cv">驳回率 ↓ · 模板一次通过率 ↑</div>
+
+    <div><span class="lane-role">研发</span></div>
+    <div><span class="chip rv">看与模板基线的 diff</span><span class="chip">只判 AI 标出的差异项</span><span class="chip">保留抽检权</span></div>
+    <div><span class="chip b">QPS / 容量卡口</span><span class="chip b">组件白名单</span><span class="chip b">埋点必填项</span><span class="chip b">异常与告警处置</span></div>
+    <div class="cv">卡口自动拦截量 ↑ · 人工审阅量 ↓</div>
+
+    <div><span class="lane-role">策略</span></div>
+    <div><span class="chip rv">方案 / 产物 / 优化三道门的策略席位</span><span class="chip">核对概率与发奖口径</span></div>
+    <div><span class="chip b">发奖与概率规则库</span><span class="chip b">反作弊口径</span><span class="chip b">奖品库存与发奖上限卡口</span></div>
+    <div class="cv">策略驳回 ↓ · 生成即合规发奖</div>
+
+    <div><span class="lane-role">QA</span></div>
+    <div><span class="chip qa">可用性验证 · 通过 / 驳回</span><span class="chip qa">缺陷回写活动时间线</span></div>
+    <div><span class="chip b">可用性标准 / 检查项清单</span><span class="chip b">自动化用例库</span><span class="chip b">复现问题 → 转为预检规则</span></div>
+    <div class="cv">AI 预检拦截项 ↑ · 测试轮次 ↓</div>
+
+    <div><span class="lane-role">业务</span></div>
+    <div><span class="chip rv">合规审批</span></div>
+    <div><span class="chip b">合规口径与禁用词库</span><span class="chip b">奖品 / 权益规则</span></div>
+    <div class="cv">合规驳回 ↓ · 生成即合规</div>
+
+    <div><span class="lane-role">运营</span></div>
+    <div><span class="chip">建活动 → 生成 → 精修 → 发起</span><span class="chip">被驳回后整改</span></div>
+    <div><span class="chip b">活动玩法库 / 复用往期活动</span><span class="chip b">人群与入口配置模板</span></div>
+    <div class="cv">从 0 起建的活动占比 ↓</div>
+  </div>
+  </div>
+  <div class="face-note">
+    <b>为什么必须画这一节：</b>A 面是泳道里那些 Review 与审批格子，天然落在某一步上；B 面横切全流程、不属于任何一步，泳道表达不了。
+    只实现 A 面的后果是：非运营角色在平台上只有「通知 + 点通过」，等于净增一个要看的系统，角色不会真正迁移进来，且人工审阅量永远不下降。<br>
+    <b>B 面是这条链路唯一的自我收敛机制：</b>A 面反复出现的问题沉淀回 B 面（硬约束 / 卡口 / 预检规则）→ AI 生成的可行域收窄 → A 面队列变短。最右列的收敛信号就是验收这套机制是否生效的指标。<br>
+    <b>一条约束：</b>B 面资产全局生效，改动会影响所有在建甚至已上线活动，因此规则层变更需双人审批，并与活动审批链分开。
+  </div>
+</section>
+<!-- ⑤ 关键流转规则 -->
+<section>
+  <div class="sec-head">
+    <span class="sec-num">05</span>
+    <h2>关键流转规则</h2>
+    <span class="sub">二十四条已拍板的决策</span>
+  </div>
+  <div class="rules">
+    <div class="rule"><h4>阶段划分默认对齐研发流水线，只在主角换人时拆</h4><p>运营视角的阶段默认取研发流水线的泳道及其 <b>x/y 完成计数</b>，不自造一套；节点与阶段<b>由流水线定义驱动，前端不写死常量</b>——否则研发加一个 agent，我们的原型和线上就对不上。<b>唯一的例外是研发的「方案设计 8/8」，我们拆成视觉设计 + 技术方案两个阶段</b>：这个分组里主责职能换了人（设计 → 前 / 后 / 策）、交付物换了种（设计稿 → 技术方案），合在一起运营会看着「方案设计」却卡在前端席位上。对账时按「研发方案设计 = 我们视觉设计 + 技术方案」映射，计数仍取流水线的。</p></div>
+    <div class="rule"><h4>一个阶段 = 一个交付物 + 一个主责职能 + 一道终局门</h4><p>这是要不要拆 / 要不要合阶段的判据。视觉设计交付设计稿、主责设计、终局门确认②；技术方案交付四方方案与物料、主责前 / 后 / 策、终局门方案人审；实现交付能点的产物、主责研发、终局门产物人审。<b>按这条判据，把点位与三方方案并进「实现」是不成立的</b>——实现段会背两个交付物、两道终局门，而且「实现中」这个状态会骗人：运营以为在写代码，其实还在写方案文档。</p></div>
+    <div class="rule"><h4>确定性的环节不设人审门</h4><p>创意与玩法这一步<b>取消了需求人审</b>，运营自己确认即可。理由：玩法是枚举的、参数有 schema 校验，路由结果要么落在枚举集内要么被明确拒绝，再加一道人工没有增量信息，只增加一次等待。<b>判断标准</b>：一道门只有在"人能给出机器给不出的判断"时才该存在；纯校验类的把关一律下沉为硬约束。</p></div>
+    <div class="rule"><h4>合规前移为硬约束，不设常设门</h4><p>业务原来在需求人审上把合规口径，那道门取消后<b>合规不是往后挪到产物人审，而是往前变成生成时的自动校验</b>——B 面的禁用词库与合规口径在玩法路由阶段就跑，命中才升级为人工。往后挪的代价是等方案和代码都做完才发现问题；变成硬约束才符合「卡口自动拦截量 ↑ · 人工审阅量 ↓」那条收敛逻辑。业务在产物人审仍保留席位，但那时审的是成品表达，不是口径。</p></div>
+    <div class="rule"><h4>阶段名用运营语言，节点名保留流水线原名</h4><p>阶段分组是我们自己划的，<b>可以本地化成运营听得懂的说法</b>（「需求分析」是面向 AI 的描述，运营视角叫「创意与玩法」）。节点是研发正在跑的东西，<b>改名会造成两套口径</b>，所以「点位说明审核」「产物人审」这类节点名一律不动。界面上凡出现节点名，就是流水线上的那个名字。</p></div>
+    <div class="rule"><h4>一道门 = N 个职能席位 + 一条会签规则</h4><p>7 道人审门全套这同一个模型。流水线图上画成单个节点的「产物人审」，内部是多职能并行会签，不是单人审。运营视角每道门只显示三件事：通过进度（3/6）、卡在谁、催办。</p></div>
+    <div class="rule"><h4>第二次及以后的门只审差量</h4><p>一条链路 7 道门乘上职能数，是 20 次量级的人工审核动作。这个量级下的真实后果不是流程慢，是<b>盲签</b>。所以：确认②只看相对确认①新增的页面态；设计验收只看相对确认②的跳转与交互态；优化人审只看相对上一次已通过版本的改动。不重复铺全量内容。</p></div>
+    <div class="rule"><h4>设计两次确认 + 一次验收</h4><p>①核心风格确认 ②全部页面生成后确认 ③带真实跳转逻辑的验收（落在产物人审的设计席位，因为「效果预览」的产物真能点）。<b>①未过不生成全量页面，②未过不产出点位说明</b>——点位说明是拿确认后的稿子产出的。</p></div>
+    <div class="rule"><h4>产物人审驳回分两档</h4><p><b>还原度问题</b>（实现没做到稿子：间距、颜色、跳转接错）→ 退回实现，设计稿与方案保留，这是默认档。<b>设计本身要改</b>（看到真实跳转后发现流程不对）→ 退回页面全量生成，连带作废方案与实现，必须由设计显式选择，且界面要先告知代价（作废 N 个节点、约 X min）。实现段约 107min，一键全废的按钮不能存在。</p></div>
+    <div class="rule"><h4>驳回按门分级退回，不统一回草稿</h4><p>各门退回点见 02。通则：驳回只作废本门及其下游，上游已通过结论保留。上线人审是例外——它否的是上线时机与风险，不是内容。旧版「驳回统一退回草稿并解锁」只在只有设计稿的阶段成立，放到实现之后就是灾难。</p></div>
+    <div class="rule"><h4>设计可在门内接棒改页，但改是捷径不是义务</h4><p>设计在自己的工作台打开活动页面全貌，<b>可以接棒与 AI 对话改这一版，也可以不改</b>。这道门的职责仍然是判定——按判定是分钟级，按代改是小时级，所以不把代改写成设计的交付责任。改动记在设计名下、进修订号，通过时以 diff 推给运营；运营可对任一处提<b>回改请求</b>，但不阻塞流转（流程已经往下走了，异议只能后置补救）。上线审批那道门不给编辑入口——它判的是时机与回滚，不是内容。</p></div>
+<div class="rule"><h4>机器能判定的不进人工清单</h4><p>预检结论按可信度分三档：<b>确定性判定</b>（对比度、字号栅格、动效时长、图标来源、卡片尺寸这类读 token 或读参数即可）只展示结论，人不勾；<b>只能给疑似</b>（安全区压边、极端内容下的溢出截断、暗色模式实际渲染）必须人工复核，进清单；<b>机器完全判不了</b>（品牌调性、视觉层级、识别性、破例裁量）进清单。清单里混入机器已判准的条目 = 重复劳动 + 盲签来源。另设一条<b>预检结论抽检</b>随机抽 1 项让人实测核对，勾"不一致"触发规则复盘但<b>不阻塞通过</b>——说真话要是会卡住自己的活动，人就会改勾"一致"，抽检立刻失效。预检的盲区要在 B 面明写出来，假装全覆盖比承认盲区危险。</p></div>
+<div class="rule"><h4>破例可反复申请，但要带申请次数与上次结论</h4><p>运营对某条规范申请破例不限次数、不置灰入口。代价是每次申请都必须带上<b>第几次</b>与<b>上次谁驳的、驳的理由原话</b>，审阅人才判得出"他有没有回应上次的理由"。破例被准予后要记在活动上，下游 QA 与上线审核看到的是"已批准的例外"，不会当成 bug 再驳一遍。</p></div>
+<div class="rule"><h4>审核超时不自动放行，也不自动换人</h4><p>一期不做自动升级备份审阅人。超时后 SLA 变红，运营能<b>催办</b>（同一审阅人每 2 小时限一次、每次写入时间线）或<b>撤回</b>，没有任何自动动作。理由：自动放行等于这道门不存在，只是延迟了几小时；自动换人则需要先定清备份席位从哪来、换人还是加人、会签分母变不变，这些没定之前编一个机制比承认没有更危险。要不要加备份席位看试运行的实际超时率。</p></div>
+<div class="rule"><h4>上线后原地优化，不复制新活动</h4><p>已上线活动走分析优化阶段的「优化 → 优化人审」<b>原地改</b>。旧规则（已上线内容锁定、改动即复制成新活动重走全流程）已废：上线后调文案、调概率、换素材是运营常态，强迫复制等于逼他们绕开平台。因此「已上线」态要保留编辑入口，改完自动进入待优化确认。</p></div>
+    <div class="rule"><h4>每个职能两类审核人</h4><p>质量审核人进点位说明 / 方案 / 产物 / 优化<b>四道门</b>，上线审核人只进上线人审。这样运营新建活动配 2×N 个人而不是 7×N。名册由各职能在自己工作台维护默认值，新建活动自动带出、可按活动覆盖；同一人可兼任但必须显式勾选。</p></div>
+    <div class="rule"><h4>策略是独立职能</h4><p>不并入后端。策略有自己的方案节点、实现节点、每道门里的席位、审核人名册，以及 B 面资产（发奖与概率规则库、反作弊口径、奖品库存与发奖上限卡口）。</p></div>
+    <div class="rule"><h4>Agent 节点折叠，门必须冒泡</h4><p>判断标准一句话：<b>会阻塞、且需要平台外的人动手的环节，必须在运营视角可见</b>（卡在谁 · SLA 剩多久 · 一键催办），其余一律折叠成一行进度。27 个节点里运营真正能动的只有 7 道门，且能做的动作只有催办。</p></div>
+    <div class="rule"><h4>界面上只说耗时与影响面，不说金额</h4><p>代价一律用<b>时间与作废范围</b>表达：「已消耗约 50min 不可退 · 重跑还需约 107min」「作废 11 个节点 · 约 107min」。金额（单节点单价、活动总成本、预算占比）不进任何角色的界面——运营要判断的是亏多少工时、下游作废多少，把生成单价摆出来只会引出无谓的单价对比，而且它不是运营的决策变量。节点级的 $ 与 min 留在研发试运行期的调优数据里，不做成产品字段。</p></div>
+    <div class="rule"><h4>Agent 失败自动重试，超限才升级</h4><p>中间的失败与重试对运营静默；重试次数用尽才置为「生成失败」并通知运营，失败节点支持原地重跑而不是整条重来。生成中取消 = 回空草稿，活动卡始终存在、可追溯。</p></div>
+    <div class="rule"><h4>主版本归运营，门内改动进修订号</h4><p>发起任一人审门即锁定<b>主版本</b>，运营需先撤回审核才能编辑，撤回即解锁并作废该门已有结论——杜绝「审的是 A、上的是 B」。但门内的审阅人（设计）可以接棒改这一版，这类改动不动主版本，<b>递增修订号</b>：v1 → v1.1。结论绑定在修订版上，diff 基线是主版本，下一道门的差量以最新修订版为准。<b>例外：分析优化阶段的优化允许在已上线态直接改</b>，改动进入新的主版本并触发优化人审。</p></div>
+    <div class="rule"><h4>B 面规则变更需双人审批</h4><p>资产与规则（模板硬约束、UI 规范、组件白名单、发奖概率规则、卡口）全局生效，改动影响所有在建及已上线活动，因此与活动审批链分开走双人审批。设计侧为活动执行设计 + AI 平台内容生产设计负责人；研发与策略侧待定。</p></div>
+    <div class="rule"><h4>立项系统只做上游约束</h4><p>不把立项表单搬进来。<b>立项通过后自动建活动卡</b>，立项单字段（活动平台、预算、活动规模、活动周期、结束与下线时间、MRD、绑定团队、有无激励）在平台内<b>只读</b>，要改回立项系统改；平台反向回写活动名称、QPS 预估、生成总耗时。活动状态只由平台持有，立项系统那边只有「已立项 / 未立项」。立项门放在创意与玩法之前——预算与规模决定生成台首屏形态，拿不到就不该开始。</p></div>
+    <div class="rule"><h4>结束与下线是两件事</h4><p>结束时间到 = 玩法停止收数据（不再产生新参与、不再出图），入口还在，进去只看得到结果页；下线时间到 = 入口撤掉，从分发资源位移除。两个时间各自可配、也都能手动触发，下线后进入退场并归档效果分析结论。</p></div>
+  </div>
+</section>
+<!-- ⑥ 一期玩法枚举与能力表 -->
+<section>
+  <div class="sec-head">
+    <span class="sec-num">06</span>
+    <h2>一期玩法枚举与能力表</h2>
+    <span class="sub">8 种玩法 × 6 个附加模块 · 降级判断的唯一依据</span>
+  </div>
+  <div class="draft-flag">
+    <div><b>示意数据，待业务与研发确认。</b>此表由设计侧先行拟定，用于把需求理解阶段的界面结构定下来（玩法卡、参数表单、降级对照表都以此为输入）。玩法与参数取值范围需运营 / 业务给定，能力标签的可实现性需研发确认。<br>
+    机制约束：LLM 只负责「自然语言 → 需求点抽取 → 匹配本表 → 生成人话差异说明」，<b>能不能做的判定必须查本表，不得由 LLM 自行判断</b>。<br>
+    降级与登记不做成运营的操作：命中 ◐ 时，确认玩法与参数即自动打降级标记、把差异说明写入活动；命中 — 时自动写一条需求记录（Intent）回收给产品。<b>运营只需要决定「就这样」还是「换个玩法」</b>——没有「接受降级」「登记需求」按钮，因为这两件事运营点不点都必须发生。</div>
+  </div>
+  <div style="overflow-x:auto">
+  <div class="tb-wrap" style="min-width:1100px">
+  <table class="cap-tb">
+    <thead><tr>
+      <th class="rh">玩法 / 模块</th>
+      <th><span>概率可配</span></th><th><span>实物奖品</span></th><th><span>虚拟券积分</span></th><th><span>次数限制</span></th>
+      <th><span>周期重置</span></th><th><span>多轮递进</span></th><th><span>UGC 内容</span></th><th><span>分享增益</span></th>
+      <th><span>好友互动</span></th><th><span>榜单排名</span></th><th><span>结果分型</span></th><th><span>定向奖池</span></th>
+      <th><span>内容审核</span></th><th><span>实时对战</span></th>
+    </tr></thead>
+    <tbody>
+      <tr><th><em>P1</em>抽奖转盘</th><td class="y">●</td><td class="y">●</td><td class="y">●</td><td class="y">●</td><td class="y">●</td><td class="n">—</td><td class="n">—</td><td class="p">◐</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="y">●</td><td class="n">—</td><td class="n na">—</td></tr>
+      <tr><th><em>P2</em>拆盒开箱</th><td class="y">●</td><td class="y">●</td><td class="y">●</td><td class="y">●</td><td class="y">●</td><td class="y">●</td><td class="n">—</td><td class="p">◐</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="y">●</td><td class="n">—</td><td class="n na">—</td></tr>
+      <tr><th><em>P3</em>许愿抽签</th><td class="p">◐</td><td class="p">◐</td><td class="y">●</td><td class="y">●</td><td class="y">●</td><td class="n">—</td><td class="y">●</td><td class="p">◐</td><td class="n">—</td><td class="n">—</td><td class="y">●</td><td class="p">◐</td><td class="y">●</td><td class="n na">—</td></tr>
+      <tr><th><em>P4</em>心理测试</th><td class="n">—</td><td class="n">—</td><td class="p">◐</td><td class="y">●</td><td class="n">—</td><td class="y">●</td><td class="n">—</td><td class="p">◐</td><td class="n">—</td><td class="n">—</td><td class="y">●</td><td class="n">—</td><td class="n">—</td><td class="n na">—</td></tr>
+      <tr><th><em>P5</em>答题闯关</th><td class="n">—</td><td class="y">●</td><td class="y">●</td><td class="y">●</td><td class="y">●</td><td class="y">●</td><td class="n">—</td><td class="p">◐</td><td class="n">—</td><td class="p">◐</td><td class="n">—</td><td class="y">●</td><td class="n">—</td><td class="n na">—</td></tr>
+      <tr><th><em>P6</em>投票 PK</th><td class="n">—</td><td class="p">◐</td><td class="y">●</td><td class="y">●</td><td class="y">●</td><td class="n">—</td><td class="n">—</td><td class="p">◐</td><td class="p">◐</td><td class="y">●</td><td class="n">—</td><td class="y">●</td><td class="n">—</td><td class="n na">—</td></tr>
+      <tr><th><em>P7</em>集卡兑换</th><td class="y">●</td><td class="y">●</td><td class="y">●</td><td class="y">●</td><td class="y">●</td><td class="y">●</td><td class="n">—</td><td class="p">◐</td><td class="p">◐</td><td class="n">—</td><td class="n">—</td><td class="y">●</td><td class="n">—</td><td class="n na">—</td></tr>
+      <tr><th><em>P8</em>任务打卡</th><td class="n">—</td><td class="y">●</td><td class="y">●</td><td class="y">●</td><td class="y">●</td><td class="y">●</td><td class="p">◐</td><td class="p">◐</td><td class="n">—</td><td class="p">◐</td><td class="n">—</td><td class="y">●</td><td class="p">◐</td><td class="n na">—</td></tr>
+      <tr><th style="background:#F6F5F1;color:var(--ink2);font-size:11.5px">附加模块（可叠加）</th><td colspan="14" style="background:#F6F5F1"></td></tr>
+      <tr><th><em>M1</em>分享得次数</th><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="y">●</td><td class="y">●</td><td class="n">—</td><td class="n">—</td><td class="y">●</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n na">—</td></tr>
+      <tr><th><em>M2</em>邀请助力</th><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="y">●</td><td class="y">●</td><td class="n">—</td><td class="n">—</td><td class="y">●</td><td class="y">●</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n na">—</td></tr>
+      <tr><th><em>M3</em>每日签到</th><td class="n">—</td><td class="n">—</td><td class="y">●</td><td class="y">●</td><td class="y">●</td><td class="y">●</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n na">—</td></tr>
+      <tr><th><em>M4</em>排行榜</th><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="y">●</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="y">●</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n na">—</td></tr>
+      <tr><th><em>M5</em>组队</th><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="y">●</td><td class="y">●</td><td class="p">◐</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n na">—</td></tr>
+      <tr><th><em>M6</em>兑换领取中心</th><td class="n">—</td><td class="y">●</td><td class="y">●</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="y">●</td><td class="n">—</td><td class="n na">—</td></tr>
+    </tbody>
+  </table>
+  </div>
+  </div>
+  <div class="legend">
+    <span><b class="y" style="color:#5C7A5A">●</b>&nbsp; 直接支持</span>
+    <span><b style="color:#B08A3E">◐</b>&nbsp; 需叠加附加模块 / 有限制（差异说明里必须写清打折在哪）</span>
+    <span><b style="color:#9A9992">—</b>&nbsp; 不支持 → 自动降级并出差异说明，同时自动登记需求</span>
+    <span style="color:#8F4231">「实时对战」整列不支持 —— 这一列存在的意义就是让「做不到」有依据</span>
+  </div>
+  <div class="plist">
+    <div class="pitem"><h4><em>P1</em>抽奖转盘</h4><div class="ds">单次概率抽奖，最通用</div><div class="ps"><span class="chip">奖池与概率</span><span class="chip">每人次数</span><span class="chip">重置周期</span><span class="chip">兜底奖</span><span class="chip">活动周期</span></div></div>
+    <div class="pitem"><h4><em>P2</em>拆盒开箱</h4><div class="ds">多次递进抽奖，有稀有度梯度</div><div class="ps"><span class="chip">盒子层级</span><span class="chip">稀有度概率</span><span class="chip">保底次数</span><span class="chip">每人次数</span></div></div>
+    <div class="pitem"><h4><em>P3</em>许愿抽签</h4><div class="ds">结果文案卡 + 强分享，内容型</div><div class="ps"><span class="chip">签文库</span><span class="chip">结果权重</span><span class="chip">许愿文案输入</span><span class="chip">分享卡样式</span><span class="chip qa">需内容审核</span></div></div>
+    <div class="pitem"><h4><em>P4</em>心理测试</h4><div class="ds">多题定向到结果分型，无奖品也成立</div><div class="ps"><span class="chip">题目与选项</span><span class="chip">分型规则</span><span class="chip">结果页文案</span><span class="chip">题目数</span></div></div>
+    <div class="pitem"><h4><em>P5</em>答题闯关</h4><div class="ds">知识问答递进关卡，可挂榜</div><div class="ps"><span class="chip">题库</span><span class="chip">关卡数</span><span class="chip">通关条件</span><span class="chip">错题重试</span><span class="chip">关卡奖励</span></div></div>
+    <div class="pitem"><h4><em>P6</em>投票 PK</h4><div class="ds">双方 / 多方阵营对垒，天然带榜</div><div class="ps"><span class="chip">阵营与选项</span><span class="chip">每人票数</span><span class="chip">投票周期</span><span class="chip">实时票数展示</span></div></div>
+    <div class="pitem"><h4><em>P7</em>集卡兑换</h4><div class="ds">碎片收集换奖，适合长周期</div><div class="ps"><span class="chip">卡片种类</span><span class="chip">掉落概率</span><span class="chip">兑换门槛</span><span class="chip">是否可赠送</span><span class="chip">获取途径</span></div></div>
+    <div class="pitem"><h4><em>P8</em>任务打卡</h4><div class="ds">多任务累计积分，转化导向</div><div class="ps"><span class="chip">任务清单</span><span class="chip">积分规则</span><span class="chip">兑换阶梯</span><span class="chip">周期重置</span></div></div>
+  </div>
+</section>
+
+</div><!-- /wrap -->
+
+<div id="tw">
+  <div class="panel">
+    <h5>TWEAKS</h5>
+    <div class="row"><label>节点字号 <b id="v1">15</b>px</label><input type="range" id="s1" min="12" max="18" value="15"></div>
+    <div class="row"><label>圆角 <b id="v2">12</b>px</label><input type="range" id="s2" min="0" max="20" value="12"></div>
+    <div class="row"><label>主色</label><div class="sw" id="sw">
+      <span class="on" data-c="#3D5A80" style="background:#3D5A80"></span>
+      <span data-c="#2F4858" style="background:#2F4858"></span>
+      <span data-c="#4A5A6A" style="background:#4A5A6A"></span>
+      <span data-c="#1C1C1A" style="background:#1C1C1A"></span>
+    </div></div>
+    <div class="row" style="margin:0"><label><input type="checkbox" id="cb" style="width:auto;accent-color:#3D5A80"> 纸张纹理底</label></div>
+  </div>
+  <button class="t" id="tb">Tweaks</button>
+</div>
+
+<script>
+const R=document.documentElement.style;
+tb.onclick=()=>document.getElementById('tw').classList.toggle('open');
+s1.oninput=e=>{R.setProperty('--fs-node',e.target.value+'px');v1.textContent=e.target.value};
+s2.oninput=e=>{R.setProperty('--rcard',e.target.value+'px');v2.textContent=e.target.value};
+sw.onclick=e=>{
+  const t=e.target.closest('span[data-c]'); if(!t)return;
+  [...sw.children].forEach(s=>s.classList.remove('on')); t.classList.add('on');
+  R.setProperty('--indigo',t.dataset.c);
+  document.querySelectorAll('.wire marker#ah path,.wire .solid').forEach(p=>p.setAttribute('stroke',t.dataset.c));
+};
+cb.onchange=e=>{
+  document.body.style.backgroundImage = e.target.checked
+    ? "radial-gradient(rgba(28,28,26,.045) .6px, transparent .6px)" : "none";
+  document.body.style.backgroundSize="4px 4px";
+};
+</script>
+</body>
+</html>
